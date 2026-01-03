@@ -18,6 +18,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.initState();
     final provider = context.read<AIAgentProvider>();
     _ollamaUrlController.text = provider.baseUrl;
+    
+    // Auto-refresh models on open
+    Future.microtask(() {
+      provider.refreshModels();
+    });
   }
 
   @override
@@ -109,12 +114,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        if (provider.availableModels.isEmpty)
-                          const Text('No models available')
+                        if (provider.isLoading)
+                          const Padding(
+                            padding: EdgeInsets.symmetric(vertical: 16),
+                            child: CircularProgressIndicator(),
+                          )
+                        else if (provider.availableModels.isEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text('No models available'),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Current: ${provider.currentModel}',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          )
                         else
                           DropdownButton<String>(
                             isExpanded: true,
-                            value: provider.currentModel,
+                            value: provider.availableModels.any((m) => m.name == provider.currentModel)
+                                ? provider.currentModel
+                                : provider.availableModels.first.name,
                             items: provider.availableModels.map((model) {
                               return DropdownMenuItem(
                                 value: model.name,
