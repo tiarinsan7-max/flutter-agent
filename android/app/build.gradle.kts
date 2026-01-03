@@ -32,10 +32,10 @@ android {
 
     signingConfigs {
         create("release") {
-            keyAlias = System.getenv("ALIAS_USERNAME") ?: "upload"
-            keyPassword = System.getenv("KEY_PASSWORD") ?: ""
+            keyAlias = System.getenv("ALIAS_USERNAME")?.takeIf { it.isNotBlank() } ?: "upload"
+            keyPassword = System.getenv("KEY_PASSWORD")?.takeIf { it.isNotBlank() }
             storeFile = file("upload-keystore.jks")
-            storePassword = System.getenv("KEY_STORE_PASSWORD") ?: ""
+            storePassword = System.getenv("KEY_STORE_PASSWORD")?.takeIf { it.isNotBlank() }
         }
     }
 

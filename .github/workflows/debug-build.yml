@@ -1,0 +1,171 @@
+name: Debug Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      debug_level:
+        description: 'Debug level'
+        required: true
+        default: 'basic'
+        type: choice
+        options:
+          - basic
+          - detailed
+          - verbose
+
+env:
+  FLUTTER_VERSION: '3.10.0'
+  JAVA_VERSION: '17'
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    name: Debug Build Process
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+
+      - name: System info
+        run: |
+          echo "=== System Info ==="
+          java -version
+          flutter --version
+          flutter doctor -v
+          ls -lh android/app/upload-keystore.jks || echo "Keystore not found"
+          echo ""
+
+      - name: Check secrets
+        run: |
+          echo "=== Checking Secrets ==="
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "❌ ANDROID_KEYSTORE_BASE64 is EMPTY"
+          else
+            echo "✓ ANDROID_KEYSTORE_BASE64 is set"
+          fi
+          
+          if [ -z "${{ secrets.KEY_STORE_PASSWORD }}" ]; then
+            echo "❌ KEY_STORE_PASSWORD is EMPTY"
+          else
+            echo "✓ KEY_STORE_PASSWORD is set"
+          fi
+          
+          if [ -z "${{ secrets.KEY_PASSWORD }}" ]; then
+            echo "❌ KEY_PASSWORD is EMPTY"
+          else
+            echo "✓ KEY_PASSWORD is set"
+          fi
+          
+          if [ -z "${{ secrets.ALIAS_USERNAME }}" ]; then
+            echo "❌ ALIAS_USERNAME is EMPTY"
+          else
+            echo "✓ ALIAS_USERNAME is set (value: ${{ secrets.ALIAS_USERNAME }})"
+          fi
+
+      - name: Test keystore decode
+        run: |
+          echo "=== Testing Keystore Decode ==="
+          if [ -z "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" ]; then
+            echo "❌ Cannot test - ANDROID_KEYSTORE_BASE64 secret is empty"
+            exit 1
+          fi
+          
+          echo "Decoding base64..."
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > /tmp/test-keystore.jks
+          
+          if [ -f /tmp/test-keystore.jks ]; then
+            SIZE=$(stat -f%z /tmp/test-keystore.jks 2>/dev/null || stat -c%s /tmp/test-keystore.jks)
+            echo "✓ Keystore decoded successfully (size: $SIZE bytes)"
+            
+            # Check file type
+            file /tmp/test-keystore.jks
+          else
+            echo "❌ Failed to decode keystore"
+            exit 1
+          fi
+
+      - name: Setup signing
+        run: |
+          echo "=== Setting Up Signing ==="
+          mkdir -p android/app
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/app/upload-keystore.jks
+          
+          if [ -f android/app/upload-keystore.jks ]; then
+            SIZE=$(stat -f%z android/app/upload-keystore.jks 2>/dev/null || stat -c%s android/app/upload-keystore.jks)
+            echo "✓ Keystore file created (size: $SIZE bytes)"
+          else
+            echo "❌ Failed to create keystore file"
+            exit 1
+          fi
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Generate build files
+        run: flutter pub run build_runner build --delete-conflicting-outputs
+
+      - name: Try build (debug)
+        if: failure() == false
+        run: flutter build apk --debug --split-per-abi
+        continue-on-error: true
+
+      - name: Try build (release without signing)
+        if: failure() == false
+        run: |
+          echo "=== Attempting Release Build WITHOUT Signing ==="
+          # Temporarily disable signing
+          sed -i 's/signingConfig = signingConfigs.getByName("release")/\/\/ signingConfig = signingConfigs.getByName("release")/g' android/app/build.gradle.kts
+          flutter build apk --release --split-per-abi
+        continue-on-error: true
+
+      - name: Try build (release with signing)
+        if: failure() == false
+        run: |
+          echo "=== Attempting Release Build WITH Signing ==="
+          # Restore signing config
+          sed -i 's/\/\/ signingConfig = signingConfigs.getByName("release")/signingConfig = signingConfigs.getByName("release")/g' android/app/build.gradle.kts
+          
+          flutter build apk --release --split-per-abi
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ALIAS_USERNAME: ${{ secrets.ALIAS_USERNAME }}
+        continue-on-error: true
+
+      - name: List build outputs
+        if: always()
+        run: |
+          echo "=== Build Outputs ==="
+          echo ""
+          echo "Debug APK:"
+          ls -lh build/app/outputs/flutter-apk/ 2>/dev/null || echo "  Not found"
+          echo ""
+          echo "Release APK:"
+          ls -lh build/app/outputs/apk/release/ 2>/dev/null || echo "  Not found"
+          echo ""
+          echo "All outputs:"
+          find build/app/outputs -type f -name "*.apk" 2>/dev/null || echo "  No APK files found"
+
+      - name: Final status
+        if: always()
+        run: |
+          echo "=== Debug Complete ==="
+          echo "Check logs above for specific errors"
+          echo "Common issues:"
+          echo "  1. Empty ANDROID_KEYSTORE_BASE64 secret"
+          echo "  2. Wrong KEY_STORE_PASSWORD"
+          echo "  3. Corrupted base64 encoding"
+          echo "  4. Missing proguard-rules.pro"
