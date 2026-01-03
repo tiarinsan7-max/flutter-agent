@@ -42,6 +42,7 @@ linter:
     - throw_in_finally
     - unnecessary_statements
     - unrelated_type_equality_checks
+    
     # Style Rules
     - always_declare_return_types
     - always_put_control_body_on_new_line
@@ -141,7 +142,7 @@ linter:
     - slash_for_doc_comments
     - sort_child_properties_last
     - sort_constructors_first
-    - sort_pub_dependencies
+    # - sort_pub_dependencies  # Disabled: SDK dependencies conflict with alphabetical sorting
     - sort_unnamed_constructors_first
     - tighten_type_of_initializing_formals
     - tilde_operator_deprecation
