@@ -1,0 +1,21 @@
+# Asset Fonts Placeholder
+
+Place your custom font files here:
+
+## Recommended Fonts:
+- Roboto-Regular.ttf
+- Roboto-Bold.ttf
+- Roboto-Light.ttf
+- Roboto-Medium.ttf
+
+## Already configured in pubspec.yaml:
+family: Roboto
+  fonts:
+    - asset: assets/fonts/Roboto-Regular.ttf
+    - asset: assets/fonts/Roboto-Bold.ttf
+      weight: 700
+    - asset: assets/fonts/Roboto-Light.ttf
+      weight: 300
+
+## Usage in code:
+TextStyle(fontFamily: 'Roboto', fontWeight: FontWeight.bold)

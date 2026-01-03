@@ -1,0 +1,25 @@
+# Asset Icons Placeholder
+
+Place your SVG and PNG icons here:
+
+## Recommended Icons:
+- chat_icon.svg
+- task_icon.svg
+- camera_icon.svg
+- document_icon.svg
+- settings_icon.svg
+- back_icon.svg
+- menu_icon.svg
+- search_icon.svg
+- add_icon.svg
+- delete_icon.svg
+
+## Icon Sets:
+- Material Icons (built-in)
+- Custom SVG icons (recommended)
+- PNG icons as fallback
+
+## Design:
+- Consistent style
+- Proper padding/alignment
+- Light & dark theme versions

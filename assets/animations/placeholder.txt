@@ -1,0 +1,21 @@
+# Asset Animations Placeholder
+
+Place your Lottie JSON animations here:
+
+## Recommended Animations:
+- loading.json
+- success.json
+- error.json
+- empty_state.json
+- typing.json
+- thinking.json
+
+## Format:
+- Lottie JSON files from lottie.com
+- Ensure compatibility with Flutter
+
+## Usage:
+Import: import 'package:lottie/lottie.dart';
+
+Display:
+Lottie.asset('assets/animations/loading.json')

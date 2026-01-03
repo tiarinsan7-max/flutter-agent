@@ -1,0 +1,22 @@
+# Asset Images Placeholder
+
+Place your image assets here:
+
+## Recommended Images:
+- app_logo.png (512x512)
+- app_icon.png (192x192)
+- splash_screen.png (1080x1920)
+- empty_state.png (400x300)
+- error_illustration.png (400x300)
+- loading_animation.gif
+
+## Formats:
+- PNG (recommended for UI)
+- JPG (for photos)
+- GIF (for animations)
+- WebP (for optimization)
+
+## Density Variants:
+- 1x: image.png
+- 2x: image@2x.png
+- 3x: image@3x.png
