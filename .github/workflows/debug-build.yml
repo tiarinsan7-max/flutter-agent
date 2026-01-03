@@ -14,7 +14,7 @@ on:
           - verbose
 
 env:
-  FLUTTER_VERSION: '3.10.0'
+  FLUTTER_VERSION: '3.27.0'  # Min Dart 3.5.0 for permission_handler 11.4.0
   JAVA_VERSION: '17'
 
 jobs:
