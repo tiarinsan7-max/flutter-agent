@@ -53,8 +53,19 @@ jobs:
           storeFile=upload-keystore.jks
           EOF
 
+      - name: Clean build
+        run: |
+          flutter clean
+          rm -rf build/
+          rm -rf android/.gradle
+          rm -rf android/app/build
+
       - name: Build App Bundle
         run: flutter build appbundle --release
+        env:
+          KEY_STORE_PASSWORD: ${{ secrets.KEY_STORE_PASSWORD }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+          ALIAS_USERNAME: ${{ secrets.ALIAS_USERNAME }}
 
       - name: Upload to Play Store (internal testing)
         uses: r0adkll/upload-google-play@v1
